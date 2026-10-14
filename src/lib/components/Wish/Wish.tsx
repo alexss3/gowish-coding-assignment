@@ -1,4 +1,7 @@
 import { WishItem } from "../../../api";
+import placeholder from "../../../assets/placeholder-item.jpg";
+import { formatPrice } from "../../utils/currency";
+
 
 interface Props {
     item: WishItem;
@@ -6,14 +9,14 @@ interface Props {
 
 function Wish({ item }: Props) {
     return (
-        <div>
-            <p>id: {item.id}</p>
-            <p>title: {item.title}</p>
-            <p>priceMinor: {item.priceMinor}</p>
-            <p>currency: {item.currency}</p>
-            {item.url && <p>url: {item.url}</p>}
-            {item.imageUrl && <p>imageUrl: {item.imageUrl}</p>}
-            <p>reservedBy: {item.reservedBy ?? 'none'}</p>
+        <div className="flex flex-col p-4 gap-2 bg-surface rounded-md">
+            <div className="flex items-center justify-center">
+                <img className="max-w-48" src={item.imageUrl ?? placeholder} alt={item.title} title={item.title} />
+            </div>
+            <div className="flex flex-col items-start">
+                <p className="text-sm"><strong>{item.title}</strong></p>
+                <p className="text-sm">{formatPrice(item.priceMinor, item.currency)}</p>
+            </div>
         </div>
     )
 }
