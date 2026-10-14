@@ -3,6 +3,10 @@
 Start time: 20:20
 End time: 23:18
 
+<img width="1156" height="841" alt="gowish-wishlist-1" src="https://github.com/user-attachments/assets/2b242dba-d798-456c-9b70-a785ae334d6a" />
+<img width="1154" height="1068" alt="gowish-wishlist-2" src="https://github.com/user-attachments/assets/0ce99d6a-265a-4bfb-88df-885ff97988d9" />
+<img width="1156" height="963" alt="gowish-wishlist-3" src="https://github.com/user-attachments/assets/1f7f5948-95a5-419f-b4b3-684d3ce8675d" />
+
 ## How to run it
 
 ### Prerequisites
