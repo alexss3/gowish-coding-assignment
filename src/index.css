@@ -67,6 +67,10 @@ h1 {
   font-size: 3rem;
 }
 
+h2 {
+  font-size: 2rem;
+}
+
 a {
   font-weight: 500;
   color: var(--color-brand-dark);
@@ -108,4 +112,20 @@ button.btn-secondary {
 button.btn-secondary:hover {
   background-color: var(--color-brand);
   color: #ffffff;
+}
+
+/* Link-styled button: looks like an anchor, behaves like an action trigger */
+button.link {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: var(--color-brand-dark);
+  font-weight: 500;
+  cursor: pointer;
+}
+button.link:hover {
+  background-color: transparent;
+  color: var(--color-brand);
+  text-decoration: underline;
 }
