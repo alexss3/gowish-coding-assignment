@@ -1,10 +1,10 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import { ConflictError, getItems, reserveItem, WishItem } from "../../../api";
+import { ConflictError, getItems, reserveItem, unreserveItem, WishItem } from "../../../api";
 import Wish from "../Wish/Wish";
 import framedCloud from "../../../assets/framed-cloud.svg";
 import sadCloud from "../../../assets/sad-cloud.svg";
 import AddItemDialog, { AddItemDialogHandle } from "../AddItemDialog/AddItemDialog";
-import ReserveDialog, { ReserveDialogHandle } from "../ReserveDialog/ReserveDialog";
+import ReserveDialog, { ReserveDialogHandle, ReserveMode } from "../ReserveDialog/ReserveDialog";
 import {
     initialWishlistState,
     wishlistReducer,
@@ -21,17 +21,24 @@ function Wishlist() {
         dispatch({ type: "ADD_ITEM", item });
     };
 
-    // Opens the confirm dialog for a given item.
+    // Opens the confirm dialog in the appropriate mode.
     const handleReserveRequest = (item: WishItem) => {
-        reserveDialogRef.current?.open(item);
+        reserveDialogRef.current?.open(item, "reserve");
     };
 
-    // Performs the actual reserve. Dispatches UPDATE_ITEM on success.
+    const handleUnreserveRequest = (item: WishItem) => {
+        reserveDialogRef.current?.open(item, "unreserve");
+    };
+
+    // Performs the actual reserve/unreserve. Dispatches UPDATE_ITEM on success.
     // On conflict we still sync the item's latest state, then re-throw so the
     // dialog stays open and shows the error.
-    const handleReserveConfirm = async (item: WishItem) => {
+    const handleReserveConfirm = async (item: WishItem, mode: ReserveMode) => {
         try {
-            const updated = await reserveItem(item.id);
+            const updated =
+                mode === "reserve"
+                    ? await reserveItem(item.id)
+                    : await unreserveItem(item.id);
             dispatch({ type: "UPDATE_ITEM", item: updated });
         } catch (err) {
             if (err instanceof ConflictError) {
@@ -84,7 +91,11 @@ function Wishlist() {
                     <ul className="flex flex-row flex-wrap gap-4">
                         {state.items.map((item) => (
                             <li key={item.id}>
-                                <Wish item={item} onReserve={handleReserveRequest} />
+                                <Wish
+                                    item={item}
+                                    onReserve={handleReserveRequest}
+                                    onUnreserve={handleUnreserveRequest}
+                                />
                             </li>
                         ))}
                     </ul>

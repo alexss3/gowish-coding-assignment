@@ -2,16 +2,39 @@ import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { ConflictError, type WishItem } from "../../../api";
 import { capitalize } from "../../utils/string";
 
+export type ReserveMode = "reserve" | "unreserve";
+
 interface Props {
-    // Called when the user confirms. Should perform the async reserve and
-    // throw on failure so this dialog can keep itself open and show the error.
-    onConfirm: (item: WishItem) => Promise<void>;
+    // Called when the user confirms. Should perform the async reserve/unreserve
+    // and throw on failure so this dialog can keep itself open and show the error.
+    onConfirm: (item: WishItem, mode: ReserveMode) => Promise<void>;
 }
 
 export interface ReserveDialogHandle {
-    open: (item: WishItem) => void;
+    open: (item: WishItem, mode?: ReserveMode) => void;
     close: () => void;
 }
+
+// Per-mode labels keep the JSX clean and make adding modes straightforward.
+const COPY: Record<
+    ReserveMode,
+    { heading: string; question: string; confirm: string; busy: string; failed: string }
+> = {
+    reserve: {
+        heading: "Reserve item",
+        question: "Do you want to reserve",
+        confirm: "Reserve",
+        busy: "Reserving...",
+        failed: "Failed to reserve item",
+    },
+    unreserve: {
+        heading: "Unreserve item",
+        question: "Do you want to unreserve",
+        confirm: "Unreserve",
+        busy: "Unreserving...",
+        failed: "Failed to unreserve item",
+    },
+};
 
 const ReserveDialog = forwardRef<ReserveDialogHandle, Props>(function ReserveDialog(
     { onConfirm },
@@ -19,11 +42,14 @@ const ReserveDialog = forwardRef<ReserveDialogHandle, Props>(function ReserveDia
 ) {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [item, setItem] = useState<WishItem | null>(null);
+    const [mode, setMode] = useState<ReserveMode>("reserve");
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     // Terminal state: the item was taken by someone else, so retrying makes no
     // sense. We collapse the footer to a single "Close" button.
     const [isConflict, setIsConflict] = useState(false);
+
+    const copy = COPY[mode];
 
     const handleClose = () => {
         dialogRef.current?.close();
@@ -34,8 +60,9 @@ const ReserveDialog = forwardRef<ReserveDialogHandle, Props>(function ReserveDia
     };
 
     useImperativeHandle(ref, () => ({
-        open: (nextItem: WishItem) => {
+        open: (nextItem: WishItem, nextMode: ReserveMode = "reserve") => {
             setItem(nextItem);
+            setMode(nextMode);
             setError(null);
             setIsSubmitting(false);
             setIsConflict(false);
@@ -49,7 +76,7 @@ const ReserveDialog = forwardRef<ReserveDialogHandle, Props>(function ReserveDia
         setError(null);
         setIsSubmitting(true);
         try {
-            await onConfirm(item);
+            await onConfirm(item, mode);
             handleClose();
         } catch (err) {
             // Keep the dialog open and surface the message.
@@ -57,7 +84,7 @@ const ReserveDialog = forwardRef<ReserveDialogHandle, Props>(function ReserveDia
                 setError(`Item was reserved by ${capitalize(err.item.reservedBy)}`);
                 setIsConflict(true);
             } else {
-                setError(err instanceof Error ? err.message : "Failed to reserve item");
+                setError(err instanceof Error ? err.message : copy.failed);
             }
         } finally {
             setIsSubmitting(false);
@@ -70,9 +97,9 @@ const ReserveDialog = forwardRef<ReserveDialogHandle, Props>(function ReserveDia
             className="w-[400px] rounded-lg p-6 m-auto backdrop:bg-black/40"
         >
             <div className="flex flex-col gap-4">
-                <h2 className="text-xl">Reserve item</h2>
+                <h2 className="text-xl">{copy.heading}</h2>
                 <p className="text-sm">
-                    Do you want to reserve
+                    {copy.question}
                     {item ? <strong> {item.title}</strong> : null}?
                 </p>
 
@@ -97,7 +124,7 @@ const ReserveDialog = forwardRef<ReserveDialogHandle, Props>(function ReserveDia
                                 onClick={handleConfirm}
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Reserving..." : "Reserve"}
+                                {isSubmitting ? copy.busy : copy.confirm}
                             </button>
                         </>
                     )}
