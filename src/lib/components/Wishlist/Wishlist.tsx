@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getItems, WishItem } from "../../../api";
 import Wish from "../Wish/Wish";
 import framedCloud from "../../../assets/framed-cloud.svg";
+import AddItemDialog, { AddItemDialogHandle } from "../AddItemDialog/AddItemDialog";
 
 function Wishlist() {
     const [wishlistItems, setWishlistItems] = useState<WishItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadingError, setLoadingError] = useState<string | null>(null);
+    const addItemDialogRef = useRef<AddItemDialogHandle>(null);
+
+    const handleItemAdded = (item: WishItem) => {
+        setWishlistItems((prev) => [...prev, item]);
+    };
 
     const loadItems = async () => {
         try {
@@ -27,10 +33,17 @@ function Wishlist() {
 
     return (
         <div className="flex flex-col">
-            <div className="bg-surface py-4 px-4 flex gap-4">
-                <img className="size-12" src={framedCloud} alt="GoWish" />
-                <h1>My Wishlist</h1>
-            </div>
+            <nav className="bg-surface py-4 px-4 flex gap-4 justify-between">
+                <div className="flex gap-4 items-center">
+                    <img className="size-12" src={framedCloud} alt="GoWish" />
+                    <h1>My Wishlist</h1>
+                </div>
+                <div>
+                    <button title="Add Item" onClick={() => addItemDialogRef.current?.open()}>
+                        Add Item
+                    </button>
+                </div>
+            </nav>
 
             <div className="p-8">
                 {isLoading ? (
@@ -47,7 +60,8 @@ function Wishlist() {
                     </ul>
                 )}
             </div>
-            
+
+            <AddItemDialog ref={addItemDialogRef} onItemAdded={handleItemAdded} />
         </div>
     )
 }

@@ -9,7 +9,7 @@ interface Props {
 
 function Wish({ item }: Props) {
     return (
-        <div className="flex flex-col p-4 gap-2 bg-surface rounded-md">
+        <div className="flex flex-col p-4 gap-2 bg-surface rounded-md" data-id={item.id}>
             <div className="flex items-center justify-center">
                 <img className="max-w-48" src={item.imageUrl ?? placeholder} alt={item.title} title={item.title} />
             </div>
