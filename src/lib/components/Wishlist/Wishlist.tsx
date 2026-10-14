@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { ConflictError, getItems, reserveItem, unreserveItem, WishItem } from "../../../api";
 import Wish from "../Wish/Wish";
 import framedCloud from "../../../assets/framed-cloud.svg";
@@ -10,12 +10,36 @@ import {
     wishlistReducer,
 } from "./wishlistReducer";
 
+type SortBy = 'ascending' | 'descending';
+
 function Wishlist() {
     const [state, dispatch] = useReducer(wishlistReducer, initialWishlistState);
     const [isLoading, setIsLoading] = useState(true);
     const [loadingError, setLoadingError] = useState<string | null>(null);
     const addItemDialogRef = useRef<AddItemDialogHandle>(null);
     const reserveDialogRef = useRef<ReserveDialogHandle>(null);
+    const [onlyUnreserved, setOnlyUnreserved] = useState(false);
+    const [sortBy, setSortBy] = useState<SortBy | null>(null);
+
+    // Derived view of the items: filter (O(n)) then optionally sort (O(n log n)).
+    // Memoized so it only recomputes when the items or the filter/sort change,
+    // not on every render. We filter first so sorting only touches items we keep,
+    // and we sort a copy so the reducer's state is never mutated.
+    const visibleItems = useMemo(() => {
+        const filtered = onlyUnreserved
+            ? state.items.filter((item) => item.reservedBy === null)
+            : state.items;
+
+        if (sortBy === null) return filtered;
+
+        const sorted = [...filtered];
+        sorted.sort((a, b) =>
+            sortBy === "ascending"
+                ? a.priceMinor - b.priceMinor
+                : b.priceMinor - a.priceMinor,
+        );
+        return sorted;
+    }, [state.items, onlyUnreserved, sortBy]);
 
     const handleItemAdded = (item: WishItem) => {
         dispatch({ type: "ADD_ITEM", item });
@@ -78,7 +102,7 @@ function Wishlist() {
                 </div>
             </nav>
 
-            <div className="p-8">
+            <div className="px-8 pb-8 pt-2">
                 {isLoading ? (
                     <p>Loading...</p>
                 ) : loadingError ? (
@@ -88,17 +112,50 @@ function Wishlist() {
                         <h2>{loadingError}</h2>
                     </div>
                 ) : (
-                    <ul className="flex flex-row flex-wrap gap-4">
-                        {state.items.map((item) => (
-                            <li key={item.id}>
-                                <Wish
-                                    item={item}
-                                    onReserve={handleReserveRequest}
-                                    onUnreserve={handleUnreserveRequest}
-                                />
-                            </li>
-                        ))}
-                    </ul>
+                    <div>
+                        <div className="flex w-full items-end justify-end gap-4 pb-4">
+                            <div className="text-sm">
+                                <span>Filter by: </span>
+                                <button
+                                    type="button"
+                                    className="link text-sm!"
+                                    onClick={() => setOnlyUnreserved((prev) => !prev)}
+                                >
+                                    {onlyUnreserved ? 'All' : 'Unreserved Only'}
+                                </button>
+                            </div>
+                            <div className="text-sm">
+                                <span>Sort by: </span>
+                                <select
+                                    id="sort-by"
+                                    title="Sort by"
+                                    value={sortBy ?? ''}
+                                    onChange={(e) =>
+                                        setSortBy(
+                                            e.target.value === ''
+                                                ? null
+                                                : (e.target.value as SortBy),
+                                        )
+                                    }
+                                >
+                                    <option value="">Default</option>
+                                    <option value="ascending">Price Asc.</option>
+                                    <option value="descending">Price Desc.</option>
+                                </select>
+                            </div>
+                        </div>
+                        <ul className="flex flex-row flex-wrap gap-4">
+                            {visibleItems.map((item) => (
+                                <li key={item.id}>
+                                    <Wish
+                                        item={item}
+                                        onReserve={handleReserveRequest}
+                                        onUnreserve={handleUnreserveRequest}
+                                    />
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 )}
             </div>
 

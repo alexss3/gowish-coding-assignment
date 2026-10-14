@@ -20,7 +20,7 @@ function Wish({ item, onReserve, onUnreserve }: Props) {
                 <img className="max-w-48" src={item.imageUrl ?? placeholder} alt={item.title} title={item.title} />
             </div>
             <div className="flex flex-col items-start">
-                <p className="text-sm"><strong>{item.title}</strong></p>
+                <p className="text-sm font-bold">{item.url ? (<a href={item.url} target="_blank">{item.title}</a>) : item.title}</p>
                 <p className="text-sm">{formatPrice(item.priceMinor, item.currency)}</p>
                 {isReservedByMe ? (
                     <button
